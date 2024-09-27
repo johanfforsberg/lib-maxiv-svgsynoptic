@@ -151,6 +151,16 @@ class TaurusSynopticWidget(SynopticWidget, TaurusWidget):
                 pass
         return value
 
+    def set_custom_value(self, model, attr_value):
+        # this is the special case where value is modified for PyAlarm class
+        # when alarm is trigered PyAlarm attribute returns 'True' value, icon on synoptic is green
+        # set_custom_value change value for better alarms visualisation
+        # function can be customised for any other tango device classes
+        if 'PyAlarm' in PyTango.get_device_proxy(model).info().dev_class:
+            return not(attr_value)
+        else:
+            return attr_value
+
     def attribute_listener(self, model, evt_src, evt_type, evt_value):
         "Handle events"
         if evt_type == TaurusEventType.Error:
@@ -202,6 +212,8 @@ class TaurusSynopticWidget(SynopticWidget, TaurusWidget):
                              (model, value))
 
         elif isinstance(value, (bool, np.bool_)):
+            #Change value 
+            value = self.set_custom_value('/'.join(model.split('/')[:-1]), value)
             classes = {"boolean": True,
                        "boolean-true": bool(value),
                        "boolean-false": not value}
